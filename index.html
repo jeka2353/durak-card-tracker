@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Счётчик карт в "Дураке"</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; margin: 10px; }
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+      gap: 5px;
+      justify-content: center;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    .card {
+      padding: 10px;
+      border: 1px solid #333;
+      cursor: pointer;
+      user-select: none;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+    .used { background-color: #ccc; }
+    .mine { background-color: lightblue; }
+    .trump { border: 2px solid red; }
+    #buttons { margin-top: 15px; display: flex; flex-direction: column; gap: 10px; align-items: center; }
+    #trumpSelect { font-size: 16px; }
+    button { padding: 10px 15px; font-size: 16px; }
+  </style>
+</head>
+<body>
+  <h1>Счётчик карт в "Дураке"</h1>
+  <div>
+    <label for="trumpSelect">Козырная масть:</label>
+    <select id="trumpSelect" onchange="highlightTrump()">
+      <option value="">—</option>
+      <option value="♠">♠ пики</option>
+      <option value="♥">♥ червы</option>
+      <option value="♦">♦ бубны</option>
+      <option value="♣">♣ трефы</option>
+    </select>
+  </div>
+  <div class="card-grid" id="cardGrid"></div>
+  <div id="buttons">
+    <button onclick="inputMyCards()">Ввести мои карты</button>
+    <button onclick="showOpponentCards()">Показать карты соперника</button>
+  </div>
+
+  <script>
+    const suits = ['♠', '♥', '♦', '♣'];
+    const ranks = ['6','7','8','9','10','J','Q','K','A'];
+    const allCards = [];
+    const usedCards = new Set();
+    const myCards = new Set();
+    const cardGrid = document.getElementById('cardGrid');
+    let trumpSuit = "";
+
+    // Генерация всех карт
+    suits.forEach(suit => {
+      ranks.forEach(rank => {
+        const card = rank + suit;
+        allCards.push(card);
+
+        const cardDiv = document.createElement('div');
+        cardDiv.textContent = card;
+        cardDiv.className = 'card';
+        cardDiv.dataset.card = card;
+        cardDiv.onclick = () => toggleCard(card, cardDiv);
+        cardGrid.appendChild(cardDiv);
+      });
+    });
+
+    function toggleCard(card, element) {
+      if (usedCards.has(card)) {
+        usedCards.delete(card);
+        element.classList.remove('used');
+      } else {
+        usedCards.add(card);
+        element.classList.add('used');
+        element.classList.remove('mine');
+        myCards.delete(card);
+      }
+    }
+
+    function inputMyCards() {
+      const input = prompt("Введи свои карты через пробел (например: 6♠ 7♣ A♥):");
+      if (!input) return;
+
+      myCards.clear();
+      document.querySelectorAll('.card').forEach(div => div.classList.remove('mine'));
+
+      input.split(' ').forEach(card => {
+        if (allCards.includes(card)) {
+          myCards.add(card);
+          const cardDiv = [...cardGrid.children].find(d => d.textContent === card);
+          if (cardDiv) {
+            cardDiv.classList.add('mine');
+            cardDiv.classList.remove('used');
+            usedCards.delete(card);
+          }
+        }
+      });
+    }
+
+    function showOpponentCards() {
+      const remaining = allCards.filter(c => !usedCards.has(c) && !myCards.has(c));
+      alert("Возможные карты у соперника:\n" + remaining.join(' '));
+    }
+
+    function highlightTrump() {
+      trumpSuit = document.getElementById('trumpSelect').value;
+      document.querySelectorAll('.card').forEach(div => {
+        const card = div.textContent;
+        if (trumpSuit && card.endsWith(trumpSuit)) {
+          div.classList.add('trump');
+        } else {
+          div.classList.remove('trump');
+        }
+      });
+    }
+  </script>
+</body>
+</html>
